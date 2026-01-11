@@ -64,4 +64,36 @@ if customer_id_input:
 
         st.success("Customer found!")
         st.metric("Segment", segment_name)
+        
+        persona_text = SEGMENT_PERSONAS.get(
+            segment_name,
+            "No persona description available."
+        )
+        
+        st.info(persona_text)
+
+# ---------------------------------------------
+# Segment Persona Definitions
+# ---------------------------------------------
+SEGMENT_PERSONAS = {
+    "Large Basket Stock-up": (
+        "Customers who place infrequent but large orders, "
+        "typically stocking up on groceries and household essentials."
+    ),
+    "Habitual Replenishers": (
+        "Regular shoppers who place frequent orders with smaller baskets, "
+        "often replenishing everyday essentials."
+    ),
+    "Fill-in Convenience Shoppers": (
+        "Customers who make quick, convenience-driven purchases, "
+        "often for immediate consumption or missing items."
+    ),
+    "Low Engagement / Trial Users": (
+        "Customers with limited or infrequent activity, "
+        "often new or trial users of the platform."
+    ),
+    "Cold Start / Unsegmented": (
+        "Customers with insufficient purchase history for behavioral segmentation."
+    )
+}
 
