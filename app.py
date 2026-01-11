@@ -36,7 +36,6 @@ def load_segment_kpis():
 
 df_segment_kpis = load_segment_kpis()
 
-
 # ---------------------------------------------
 # Helper — Load customer features shard on demand
 # ---------------------------------------------
