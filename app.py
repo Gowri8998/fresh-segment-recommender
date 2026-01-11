@@ -166,9 +166,7 @@ with tab_overview:
 # =============================================
 # TAB 2 — SEGMENT INSIGHTS
 # =============================================
-# =============================================
-# TAB 2 — SEGMENT INSIGHTS
-# =============================================
+
 with tab_segments:
     st.subheader("Segment Insights & Behavioral KPIs")
 
@@ -280,33 +278,51 @@ with tab_customer:
         st.subheader("🎯 Recommended for You")
 
         TOP_N = 5
+        CANDIDATES = 50  # take top 50, then diversify
 
-        recs = (
+        # Top candidates by affinity
+        candidates = (
             df_item_affinity[
                 df_item_affinity["segment_name"] == segment_name
             ]
             .sort_values("rank")
-            .head(TOP_N)
+            .head(CANDIDATES)
         )
 
-        if recs.empty:
-            st.warning("No recommendations available for this segment.")
+        # Join with item metadata
+        candidates = candidates.merge(
+            df_item_lookup,
+            on="asin",
+            how="left"
+        )
+
+        # Diversity-aware selection
+        selected = []
+        seen_categories = set()
+
+        for _, row in candidates.iterrows():
+            category = row["uphl1"]
+
+            if category not in seen_categories:
+                selected.append(row)
+                seen_categories.add(category)
+
+            if len(selected) == TOP_N:
+                break
+
+        if not selected:
+            st.warning("No recommendations available.")
         else:
-            for _, row in recs.iterrows():
-                asin = row["asin"]
-
-                item_name_row = df_item_lookup[
-                    df_item_lookup["asin"] == asin
-                ]
-            
-                if not item_name_row.empty:
-                    item_name = item_name_row["item_name"].values[0]
-                    st.write(f"• **{item_name}**")
-                else:
-                    st.write(f"• **{asin}**")
-
+            for row in selected:
+                st.write(
+                    f"• **{row['item_name']}**  \n"
+                    f"  _Category: {row['uphl1']}_"
+                )
 
         st.caption(
             "Recommendations are generated using segment-aware collaborative "
-            "filtering based on item co-occurrence among similar customers."
+            "filtering with category-level diversification to improve variety."
         )
+
+
+        
