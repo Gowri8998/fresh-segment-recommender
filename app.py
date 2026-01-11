@@ -62,16 +62,6 @@ if customer_id_input:
     else:
         segment_name = customer_row["segment_name"].values[0]
 
-        st.success("Customer found!")
-        st.metric("Segment", segment_name)
-        
-        persona_text = SEGMENT_PERSONAS.get(
-            segment_name,
-            "No persona description available."
-        )
-        
-        st.info(persona_text)
-
 # ---------------------------------------------
 # Segment Persona Definitions
 # ---------------------------------------------
@@ -97,3 +87,12 @@ SEGMENT_PERSONAS = {
     )
 }
 
+        st.success("Customer found!")
+        st.metric("Segment", segment_name)
+        
+        persona_text = SEGMENT_PERSONAS.get(
+            segment_name,
+            "No persona description available."
+        )
+        
+        st.info(persona_text)
