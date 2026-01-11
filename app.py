@@ -28,6 +28,16 @@ def load_customer_segments():
 df_segments = load_customer_segments()
 
 # ---------------------------------------------
+# Load Segment-level KPIs (Parquet)
+# ---------------------------------------------
+@st.cache_data
+def load_segment_kpis():
+    return pd.read_parquet("data/segment_kpis.parquet")
+
+df_segment_kpis = load_segment_kpis()
+
+
+# ---------------------------------------------
 # Segment Persona Definitions
 # ---------------------------------------------
 SEGMENT_PERSONAS = {
@@ -129,12 +139,28 @@ with tab_overview:
 # =============================================
 # TAB 2 — SEGMENT INSIGHTS
 # =============================================
+# =============================================
+# TAB 2 — SEGMENT INSIGHTS
+# =============================================
 with tab_segments:
-    st.subheader("Segment Personas")
+    st.subheader("Segment Insights & Behavioral KPIs")
+
+    st.subheader("📈 Segment-wise KPIs")
+    st.dataframe(df_segment_kpis)
+
+    st.info(
+        "These KPIs summarize average behavioral patterns at the segment level. "
+        "Stock-up segments typically show higher spend, while habitual segments "
+        "exhibit higher engagement frequency."
+    )
+
+    st.divider()
+    st.subheader("🧠 Segment Personas")
 
     for segment, description in SEGMENT_PERSONAS.items():
         st.markdown(f"### {segment}")
         st.markdown(description)
+
 
 # =============================================
 # TAB 3 — CUSTOMER DEEP DIVE
