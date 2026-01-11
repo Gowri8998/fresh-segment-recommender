@@ -323,6 +323,5 @@ with tab_customer:
             "filtering with category-level diversification to improve variety."
         )
 
-st.cache_data.clear()
 
         
