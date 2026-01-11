@@ -98,6 +98,35 @@ with tab_overview:
         segment_counts.set_index("segment_name")["customer_count"]
     )
 
+    # High-level KPIs
+    total_customers = df_segments.shape[0]
+    num_segments = df_segments["segment_name"].nunique()
+
+    largest_segment = (
+        df_segments["segment_name"]
+        .value_counts()
+        .idxmax()
+    )
+
+    smallest_segment = (
+        df_segments["segment_name"]
+        .value_counts()
+        .idxmin()
+    )
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("Total Customers", total_customers)
+    col2.metric("Number of Segments", num_segments)
+    col3.metric("Largest Segment", largest_segment)
+    col4.metric("Smallest Segment", smallest_segment)
+        
+    st.info(
+        "Customer behavior is dominated by routine and stock-up shopping patterns, "
+        "highlighting strong opportunities for segment-aware personalization."
+    )
+
+
 # =============================================
 # TAB 2 — SEGMENT INSIGHTS
 # =============================================
