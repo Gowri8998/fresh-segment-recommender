@@ -42,28 +42,17 @@ st.write(df_segments.head())
 st.write("Total customers loaded:", df_segments.shape[0])
 
 # ---------------------------------------------
-# Customer Lookup
+# Load Customer Segments (Parquet)
 # ---------------------------------------------
-st.divider()
-st.header("🔍 Customer Segment Lookup")
+@st.cache_data
+def load_customer_segments():
+    return pd.read_parquet("data/customer_segments.parquet")
 
-customer_id_input = st.text_input(
-    "Enter Customer ID (e.g. CUST123456)",
-    placeholder="CUSTxxxxxxx"
-)
+df_segments = load_customer_segments()
 
-if customer_id_input:
-    customer_row = df_segments[
-        df_segments["customer_id"] == customer_id_input
-    ]
-
-    if customer_row.empty:
-        st.warning("Customer ID not found in segmentation data.")
-    else:
-        segment_name = customer_row["segment_name"].values[0]
 
 # ---------------------------------------------
-# Segment Persona Definitions
+# Segment Persona Definitions  ✅ MUST BE HERE
 # ---------------------------------------------
 SEGMENT_PERSONAS = {
     "Large Basket Stock-up": (
@@ -86,6 +75,27 @@ SEGMENT_PERSONAS = {
         "Customers with insufficient purchase history for behavioral segmentation."
     )
 }
+
+# ---------------------------------------------
+# Customer Lookup
+# ---------------------------------------------
+st.divider()
+st.header("🔍 Customer Segment Lookup")
+
+customer_id_input = st.text_input(
+    "Enter Customer ID (e.g. CUST123456)",
+    placeholder="CUSTxxxxxxx"
+)
+
+if customer_id_input:
+    customer_row = df_segments[
+        df_segments["customer_id"] == customer_id_input
+    ]
+
+    if customer_row.empty:
+        st.warning("Customer ID not found in segmentation data.")
+    else:
+        segment_name = customer_row["segment_name"].values[0]
 
         st.success("Customer found!")
         st.metric("Segment", segment_name)
