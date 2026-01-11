@@ -38,6 +38,15 @@ df_segment_kpis = load_segment_kpis()
 
 
 # ---------------------------------------------
+# Helper — Load customer features shard on demand
+# ---------------------------------------------
+@st.cache_data
+def load_customer_feature_shard(shard_key: str):
+    shard_path = f"data/customer_feature_shards/CUST{shard_key}.parquet"
+    return pd.read_parquet(shard_path)
+
+
+# ---------------------------------------------
 # Segment Persona Definitions
 # ---------------------------------------------
 SEGMENT_PERSONAS = {
@@ -174,50 +183,75 @@ with tab_customer:
     )
 
     if customer_id_input:
+        # -----------------------------------------
+        # Segment lookup
+        # -----------------------------------------
         customer_row = df_segments[
             df_segments["customer_id"] == customer_id_input
         ]
 
         if customer_row.empty:
             st.warning("Customer ID not found.")
-        else:
-            segment_name = customer_row["segment_name"].values[0]
+            st.stop()
 
-            st.success("Customer found")
-            st.metric("Customer Segment", segment_name)
+        segment_name = customer_row["segment_name"].values[0]
 
-            # Persona
-            persona_text = SEGMENT_PERSONAS.get(
-                segment_name,
-                "No persona description available."
-            )
-            st.info(persona_text)
+        st.success("Customer found")
+        st.metric("Customer Segment", segment_name)
 
-            # -----------------------------------------
-            # Segment Context KPIs
-            # -----------------------------------------
-            segment_kpi_row = df_segment_kpis[
-                df_segment_kpis["segment_name"] == segment_name
+        # Persona
+        persona_text = SEGMENT_PERSONAS.get(
+            segment_name,
+            "No persona description available."
+        )
+        st.info(persona_text)
+
+        # -----------------------------------------
+        # Load customer-level KPIs (on demand)
+        # -----------------------------------------
+        shard_key = customer_id_input[4]  # first digit after 'CUST'
+        shard_df = load_customer_feature_shard(shard_key)
+
+        customer_feat = shard_df[
+            shard_df["customer_id"] == customer_id_input
+        ]
+
+        if customer_feat.empty:
+            st.warning("Customer feature data not available.")
+            st.stop()
+
+        customer_feat = customer_feat.iloc[0]
+
+        # -----------------------------------------
+        # Segment KPI row
+        # -----------------------------------------
+        segment_kpi = df_segment_kpis[
+            df_segment_kpis["segment_name"] == segment_name
+        ].iloc[0]
+
+        # -----------------------------------------
+        # Customer vs Segment comparison
+        # -----------------------------------------
+        comparison_df = pd.DataFrame({
+            "Metric": [
+                "Orders",
+                "Total Spend",
+                "Avg Order Value",
+                "Recency (Days)"
+            ],
+            "Customer": [
+                round(customer_feat["orders"], 2),
+                round(customer_feat["total_spend"], 2),
+                round(customer_feat["avg_order_value"], 2),
+                round(customer_feat["days_since_last_order"], 2)
+            ],
+            "Segment Average": [
+                round(segment_kpi["avg_orders"], 2),
+                round(segment_kpi["avg_total_spend"], 2),
+                round(segment_kpi["avg_order_value"], 2),
+                round(segment_kpi["avg_recency_days"], 2)
             ]
+        })
 
-            if not segment_kpi_row.empty:
-                st.subheader("📊 Segment Context (Average Behavior)")
-
-                col1, col2, col3, col4 = st.columns(4)
-
-                col1.metric(
-                    "Avg Orders",
-                    round(segment_kpi_row["avg_orders"].values[0], 2)
-                )
-                col2.metric(
-                    "Avg Total Spend",
-                    round(segment_kpi_row["avg_total_spend"].values[0], 2)
-                )
-                col3.metric(
-                    "Avg Order Value",
-                    round(segment_kpi_row["avg_order_value"].values[0], 2)
-                )
-                col4.metric(
-                    "Avg Recency (Days)",
-                    round(segment_kpi_row["avg_recency_days"].values[0], 2)
-                )
+        st.subheader("📊 Customer vs Segment Comparison")
+        st.dataframe(comparison_df)
