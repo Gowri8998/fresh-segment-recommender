@@ -176,3 +176,35 @@ if customer_id_input:
         )
         
         st.info(persona_text)
+
+# ---------------------------------------------
+# Segment Distribution Overview
+# ---------------------------------------------
+st.divider()
+st.header("📊 Segment Distribution Overview")
+
+# Compute distribution
+segment_counts = (
+    df_segments["segment_name"]
+    .value_counts()
+    .reset_index()
+)
+
+segment_counts.columns = ["segment_name", "customer_count"]
+
+# Percentage share
+total_customers = segment_counts["customer_count"].sum()
+segment_counts["share_pct"] = (
+    segment_counts["customer_count"] / total_customers * 100
+).round(2)
+
+# Display table
+st.subheader("Segment-wise Customer Counts")
+st.dataframe(segment_counts)
+
+# Bar chart
+st.subheader("Customer Share by Segment")
+st.bar_chart(
+    segment_counts.set_index("segment_name")["customer_count"]
+)
+
