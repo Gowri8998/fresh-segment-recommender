@@ -300,23 +300,32 @@ with tab_customer:
         seen_categories = set()
 
         for _, row in candidates.iterrows():
-            category = row["uphl1"]
-
+            category = row.get("uphl1")
+        
+            # Skip items with no category info
+            if pd.isna(category):
+                continue
+        
             if category not in seen_categories:
                 selected.append(row)
                 seen_categories.add(category)
-
+        
             if len(selected) == TOP_N:
                 break
+
 
         if not selected:
             st.warning("No recommendations available.")
         else:
             for row in selected:
+                item_name = row.get("item_name", "Unknown Item")
+                category = row.get("uphl1", "Unknown Category")
+            
                 st.write(
-                    f"• **{row['item_name']}**  \n"
-                    f"  _Category: {row['uphl1']}_"
+                    f"• **{item_name}**  \n"
+                    f"  _Category: {category}_"
                 )
+
 
         st.caption(
             "Recommendations are generated using segment-aware collaborative "
