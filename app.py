@@ -216,15 +216,6 @@ with tab_customer:
         # -----------------------------------------
         # Customer Profile Snapshot
         # -----------------------------------------
-        st.subheader("🧑 Customer Profile Snapshot")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        
-        col1.metric("Orders", int(customer_feat["orders"]))
-        col2.metric("Total Spend", f"₹{customer_feat['total_spend']:.0f}")
-        col3.metric("Avg Order Value", f"₹{customer_feat['avg_order_value']:.0f}")
-        col4.metric("Days Since Last Order", int(customer_feat["days_since_last_order"]))
-
 
         # Persona
         persona_text = SEGMENT_PERSONAS.get(
@@ -248,6 +239,19 @@ with tab_customer:
             st.stop()
 
         customer_feat = customer_feat.iloc[0]
+
+        # -----------------------------------------
+        # Customer Profile Snapshot
+        # -----------------------------------------
+        st.subheader("🧑 Customer Profile Snapshot")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        col1.metric("Orders", int(customer_feat["orders"]))
+        col2.metric("Total Spend", f"₹{customer_feat['total_spend']:.0f}")
+        col3.metric("Avg Order Value", f"₹{customer_feat['avg_order_value']:.0f}")
+        col4.metric("Days Since Last Order", int(customer_feat["days_since_last_order"]))
+
 
         # -----------------------------------------
         # Segment KPI row
