@@ -45,6 +45,15 @@ def load_customer_feature_shard(shard_key: str):
     shard_path = f"data/customer_feature_shards/CUST{shard_key}.parquet"
     return pd.read_parquet(shard_path)
 
+# ---------------------------------------------
+# Load Segment-level Item Affinity (Recommendations)
+# ---------------------------------------------
+@st.cache_data
+def load_segment_item_affinity():
+    return pd.read_parquet("data/segment_item_affinity.parquet")
+
+df_item_affinity = load_segment_item_affinity()
+
 
 # ---------------------------------------------
 # Segment Persona Definitions
@@ -255,3 +264,29 @@ with tab_customer:
 
         st.subheader("📊 Customer vs Segment Comparison")
         st.dataframe(comparison_df)
+        
+        # -----------------------------------------
+        # Segment-aware Recommendations
+        # -----------------------------------------
+        st.subheader("🎯 Recommended for You")
+
+        TOP_N = 5
+
+        recs = (
+            df_item_affinity[
+                df_item_affinity["segment_name"] == segment_name
+            ]
+            .sort_values("rank")
+            .head(TOP_N)
+        )
+
+        if recs.empty:
+            st.warning("No recommendations available for this segment.")
+        else:
+            for i, row in recs.iterrows():
+                st.write(f"• **{row['asin']}**")
+
+        st.caption(
+            "Recommendations are generated using segment-aware collaborative "
+            "filtering based on item co-occurrence among similar customers."
+        )
