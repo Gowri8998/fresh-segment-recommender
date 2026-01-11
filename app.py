@@ -76,28 +76,6 @@ tab_overview, tab_segments, tab_customer = st.tabs(
 with tab_overview:
     st.subheader("Overall Customer Overview")
 
-    st.metric("Total Customers", df_segments.shape[0])
-
-    segment_counts = (
-        df_segments["segment_name"]
-        .value_counts()
-        .reset_index()
-    )
-    segment_counts.columns = ["segment_name", "customer_count"]
-
-    segment_counts["share_pct"] = (
-        segment_counts["customer_count"]
-        / segment_counts["customer_count"].sum()
-        * 100
-    ).round(2)
-
-    st.subheader("Segment Distribution")
-    st.dataframe(segment_counts)
-
-    st.bar_chart(
-        segment_counts.set_index("segment_name")["customer_count"]
-    )
-
     # High-level KPIs
     total_customers = df_segments.shape[0]
     num_segments = df_segments["segment_name"].nunique()
@@ -120,6 +98,27 @@ with tab_overview:
     col2.metric("Number of Segments", num_segments)
     col3.metric("Largest Segment", largest_segment)
     col4.metric("Smallest Segment", smallest_segment)
+
+    segment_counts = (
+        df_segments["segment_name"]
+        .value_counts()
+        .reset_index()
+    )
+    segment_counts.columns = ["segment_name", "customer_count"]
+
+    segment_counts["share_pct"] = (
+        segment_counts["customer_count"]
+        / segment_counts["customer_count"].sum()
+        * 100
+    ).round(2)
+
+    st.subheader("Segment Distribution")
+    st.dataframe(segment_counts)
+
+    st.bar_chart(
+        segment_counts.set_index("segment_name")["customer_count"]
+    )
+
         
     st.info(
         "Customer behavior is dominated by routine and stock-up shopping patterns, "
