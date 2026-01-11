@@ -213,6 +213,19 @@ with tab_customer:
         st.success("Customer found")
         st.metric("Customer Segment", segment_name)
 
+        # -----------------------------------------
+        # Customer Profile Snapshot
+        # -----------------------------------------
+        st.subheader("🧑 Customer Profile Snapshot")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        col1.metric("Orders", int(customer_feat["orders"]))
+        col2.metric("Total Spend", f"₹{customer_feat['total_spend']:.0f}")
+        col3.metric("Avg Order Value", f"₹{customer_feat['avg_order_value']:.0f}")
+        col4.metric("Days Since Last Order", int(customer_feat["days_since_last_order"]))
+
+
         # Persona
         persona_text = SEGMENT_PERSONAS.get(
             segment_name,
@@ -269,6 +282,26 @@ with tab_customer:
 
         st.subheader("📊 Customer vs Segment Comparison")
         st.dataframe(comparison_df)
+
+        # Visual comparison
+        import altair as alt
+        
+        viz_df = comparison_df.melt(
+            id_vars="Metric",
+            value_vars=["Customer", "Segment Average"],
+            var_name="Type",
+            value_name="Value"
+        )
+        
+        chart = alt.Chart(viz_df).mark_bar().encode(
+            x=alt.X("Metric:N", title=None),
+            y=alt.Y("Value:Q"),
+            color="Type:N",
+            column="Type:N"
+        )
+        
+        st.altair_chart(chart, use_container_width=True)
+
         
         # -----------------------------------------
         # Segment-aware Recommendations
@@ -331,5 +364,17 @@ with tab_customer:
             "filtering with category-level diversification to improve variety."
         )
 
+        with st.expander("🤔 Why am I seeing these recommendations?"):
+            st.markdown(f"""
+            These recommendations are generated using a **segment-aware collaborative filtering** approach.
+        
+            **How it works:**
+            - You belong to the **{segment_name}** customer segment
+            - Customers in this segment exhibit similar shopping behavior
+            - Items are recommended based on **frequent co-occurrence** in their baskets
+            - Results are **diversified across categories** to improve discovery
+        
+            This approach balances **relevance, scalability, and interpretability**.
+            """)
 
         
