@@ -54,6 +54,15 @@ def load_segment_item_affinity():
 
 df_item_affinity = load_segment_item_affinity()
 
+# ---------------------------------------------
+# Load Item Lookup (ASIN → Item Name)
+# ---------------------------------------------
+@st.cache_data
+def load_item_lookup():
+    return pd.read_parquet("data/item_lookup.parquet")
+
+df_item_lookup = load_item_lookup()
+
 
 # ---------------------------------------------
 # Segment Persona Definitions
@@ -283,8 +292,19 @@ with tab_customer:
         if recs.empty:
             st.warning("No recommendations available for this segment.")
         else:
-            for i, row in recs.iterrows():
-                st.write(f"• **{row['asin']}**")
+            for _, row in recs.iterrows():
+                asin = row["asin"]
+
+                item_name_row = df_item_lookup[
+                    df_item_lookup["asin"] == asin
+                ]
+            
+                if not item_name_row.empty:
+                    item_name = item_name_row["item_name"].values[0]
+                    st.write(f"• **{item_name}**")
+                else:
+                    st.write(f"• **{asin}**")
+
 
         st.caption(
             "Recommendations are generated using segment-aware collaborative "
