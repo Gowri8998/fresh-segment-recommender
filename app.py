@@ -165,19 +165,102 @@ with tab_overview:
 # TAB 2 — SEGMENT INSIGHTS
 # =============================================
 
+# =============================================
+# TAB 2 — SEGMENT INSIGHTS
+# =============================================
 with tab_segments:
-    st.subheader("Segment Insights & Behavioral KPIs")
 
+    # -----------------------------------------
+    # Title
+    # -----------------------------------------
+    st.subheader("🧠 Segment Insights & Behavioral KPIs")
+
+    # -----------------------------------------
+    # Segment KPI Snapshot (Cards)
+    # -----------------------------------------
+    st.subheader("📌 Segment KPI Snapshot")
+
+    col1, col2, col3 = st.columns(3)
+
+    top_spend_segment = (
+        df_segment_kpis
+        .sort_values("avg_total_spend", ascending=False)
+        .iloc[0]
+    )
+
+    most_frequent_segment = (
+        df_segment_kpis
+        .sort_values("avg_orders", ascending=False)
+        .iloc[0]
+    )
+
+    lowest_recency_segment = (
+        df_segment_kpis
+        .sort_values("avg_recency_days")
+        .iloc[0]
+    )
+
+    col1.metric(
+        "Highest Avg Spend Segment",
+        top_spend_segment["segment_name"],
+        f"{top_spend_segment['avg_total_spend']:.0f}"
+    )
+
+    col2.metric(
+        "Most Frequent Shoppers",
+        most_frequent_segment["segment_name"],
+        f"{most_frequent_segment['avg_orders']:.1f} orders"
+    )
+
+    col3.metric(
+        "Most Recently Active Segment",
+        lowest_recency_segment["segment_name"],
+        f"{lowest_recency_segment['avg_recency_days']:.0f} days"
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Segment-wise KPI Table
+    # -----------------------------------------
     st.subheader("📈 Segment-wise KPIs")
     st.dataframe(df_segment_kpis)
 
     st.info(
         "These KPIs summarize average behavioral patterns at the segment level. "
-        "Stock-up segments typically show higher spend, while habitual segments "
-        "exhibit higher engagement frequency."
+        "Different segments contribute value either through higher spend per order "
+        "or through higher purchase frequency."
+    )
+
+    # -----------------------------------------
+    # Avg Spend by Segment
+    # -----------------------------------------
+    st.subheader("💰 Average Total Spend by Segment")
+
+    st.bar_chart(
+        df_segment_kpis.set_index("segment_name")["avg_total_spend"]
+    )
+
+    # -----------------------------------------
+    # Avg Orders by Segment
+    # -----------------------------------------
+    st.subheader("🛒 Average Number of Orders by Segment")
+
+    st.bar_chart(
+        df_segment_kpis.set_index("segment_name")["avg_orders"]
+    )
+
+    st.info(
+        "Stock-up oriented segments typically drive higher spend per customer, "
+        "while habitual segments drive engagement through frequent purchases. "
+        "These behavioral differences motivate segment-aware recommendation strategies."
     )
 
     st.divider()
+
+    # -----------------------------------------
+    # Segment Personas
+    # -----------------------------------------
     st.subheader("🧠 Segment Personas")
 
     for segment, description in SEGMENT_PERSONAS.items():
