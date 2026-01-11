@@ -54,27 +54,97 @@ df_segments = load_customer_segments()
 # ---------------------------------------------
 # Segment Persona Definitions  ✅ MUST BE HERE
 # ---------------------------------------------
+# ---------------------------------------------
+# Segment Persona Definitions (Detailed)
+# ---------------------------------------------
 SEGMENT_PERSONAS = {
+
     "Large Basket Stock-up": (
-        "Customers who place infrequent but large orders, "
-        "typically stocking up on groceries and household essentials."
+        "**Who are they?**\n"
+        "High-spending households, often families, who complete their full or weekly grocery shopping online. "
+        "They typically have higher disposable incomes and a strong affinity towards Amazon Fresh.\n\n"
+
+        "**General shopping behavior:**\n"
+        "These customers place infrequent but very large orders, often exceeding a full weekly shop. "
+        "They usually know exactly what they want to buy and rely on Amazon Fresh for both routine and "
+        "special-occasion shopping.\n\n"
+
+        "**Underlying needs & motivations:**\n"
+        "They value reliability, fast delivery, and wide selection. Grocery shopping online helps them "
+        "save time, stay organized, and spend more time with family. They enjoy discovering new products, "
+        "meal kits, and cuisines, but prefer experiences that are seamless and efficient.\n\n"
+
+        "**What they buy:**\n"
+        "A complete grocery basket across all major categories. They tend to over-index on premium items "
+        "such as wine, spirits, and ready-to-eat meals."
     ),
+
     "Habitual Replenishers": (
-        "Regular shoppers who place frequent orders with smaller baskets, "
-        "often replenishing everyday essentials."
+        "**Who are they?**\n"
+        "Regular, loyal customers who rely on Amazon Fresh for frequent grocery replenishment. "
+        "Often families or steady households with predictable consumption patterns.\n\n"
+
+        "**General shopping behavior:**\n"
+        "They place frequent orders with smaller-to-medium basket sizes, typically restocking everyday essentials. "
+        "Their shopping is routine-driven and planned.\n\n"
+
+        "**Underlying needs & motivations:**\n"
+        "They value convenience, consistency, and trust. Shopping online gives them a sense of control "
+        "and helps them manage daily life efficiently. They appreciate good deals, ease of reordering, "
+        "and reliable availability.\n\n"
+
+        "**What they buy:**\n"
+        "Fresh produce, dairy, pantry staples, and household essentials. They tend to repurchase the same "
+        "set of items regularly."
     ),
+
     "Fill-in Convenience Shoppers": (
-        "Customers who make quick, convenience-driven purchases, "
-        "often for immediate consumption or missing items."
+        "**Who are they?**\n"
+        "Convenience-driven customers making quick, top-up purchases for immediate needs or forgotten items.\n\n"
+
+        "**General shopping behavior:**\n"
+        "They place small, frequent orders, often driven by urgency rather than routine planning. "
+        "These trips are usually short and focused.\n\n"
+
+        "**Underlying needs & motivations:**\n"
+        "Speed and ease are critical. They use Amazon Fresh to quickly solve a need — saving time, "
+        "avoiding physical store visits, and ensuring immediate availability.\n\n"
+
+        "**What they buy:**\n"
+        "Top-up items such as snacks, ready meals, beverages, and last-minute essentials."
     ),
+
     "Low Engagement / Trial Users": (
-        "Customers with limited or infrequent activity, "
-        "often new or trial users of the platform."
+        "**Who are they?**\n"
+        "New or infrequent users with limited interaction history on Amazon Fresh.\n\n"
+
+        "**General shopping behavior:**\n"
+        "They place very few orders and have not yet formed a consistent shopping habit on the platform.\n\n"
+
+        "**Underlying needs & motivations:**\n"
+        "These customers are still exploring the service. They may be testing delivery quality, pricing, "
+        "or product availability before committing to regular usage.\n\n"
+
+        "**What they buy:**\n"
+        "Small baskets with limited category diversity, often focused on trial or one-off purchases."
     ),
+
     "Cold Start / Unsegmented": (
-        "Customers with insufficient purchase history for behavioral segmentation."
+        "**Who are they?**\n"
+        "Customers with insufficient historical data to confidently assign a behavioral segment.\n\n"
+
+        "**General shopping behavior:**\n"
+        "Either very new customers or those with extremely sparse purchase activity.\n\n"
+
+        "**Underlying needs & motivations:**\n"
+        "Not enough data to infer stable preferences yet. These customers represent an opportunity "
+        "for onboarding, discovery, and engagement strategies.\n\n"
+
+        "**What they buy:**\n"
+        "Highly variable — depends on initial interaction with the platform."
     )
 }
+
 
 # ---------------------------------------------
 # Customer Lookup
