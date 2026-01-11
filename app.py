@@ -61,8 +61,6 @@ def load_item_lookup():
     return pd.read_parquet("data/item_lookup2.parquet")
 
 df_item_lookup = load_item_lookup()
-st.write("DEBUG item lookup columns:", df_item_lookup.columns.tolist())
-
 
 # ---------------------------------------------
 # Segment Persona Definitions
