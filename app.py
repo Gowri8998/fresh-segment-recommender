@@ -166,7 +166,7 @@ with tab_segments:
 # TAB 3 — CUSTOMER DEEP DIVE
 # =============================================
 with tab_customer:
-    st.subheader("Customer Lookup")
+    st.subheader("Customer Deep Dive")
 
     customer_id_input = st.text_input(
         "Enter Customer ID",
@@ -184,10 +184,40 @@ with tab_customer:
             segment_name = customer_row["segment_name"].values[0]
 
             st.success("Customer found")
-            st.metric("Segment", segment_name)
+            st.metric("Customer Segment", segment_name)
 
+            # Persona
             persona_text = SEGMENT_PERSONAS.get(
                 segment_name,
                 "No persona description available."
             )
             st.info(persona_text)
+
+            # -----------------------------------------
+            # Segment Context KPIs
+            # -----------------------------------------
+            segment_kpi_row = df_segment_kpis[
+                df_segment_kpis["segment_name"] == segment_name
+            ]
+
+            if not segment_kpi_row.empty:
+                st.subheader("📊 Segment Context (Average Behavior)")
+
+                col1, col2, col3, col4 = st.columns(4)
+
+                col1.metric(
+                    "Avg Orders",
+                    round(segment_kpi_row["avg_orders"].values[0], 2)
+                )
+                col2.metric(
+                    "Avg Total Spend",
+                    round(segment_kpi_row["avg_total_spend"].values[0], 2)
+                )
+                col3.metric(
+                    "Avg Order Value",
+                    round(segment_kpi_row["avg_order_value"].values[0], 2)
+                )
+                col4.metric(
+                    "Avg Recency (Days)",
+                    round(segment_kpi_row["avg_recency_days"].values[0], 2)
+                )
