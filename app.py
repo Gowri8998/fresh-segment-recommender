@@ -58,7 +58,7 @@ df_item_affinity = load_segment_item_affinity()
 # ---------------------------------------------
 @st.cache_data
 def load_item_lookup():
-    return pd.read_parquet("data/item_lookup.parquet")
+    return pd.read_parquet("data/item_lookup2.parquet")
 
 df_item_lookup = load_item_lookup()
 st.write("DEBUG item lookup columns:", df_item_lookup.columns.tolist())
