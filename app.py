@@ -2,39 +2,45 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-# ---------------------------------------------
-# Page Config
-# ---------------------------------------------
+# =====================================================
+# PAGE CONFIG
+# =====================================================
 st.set_page_config(
     page_title="Amazon Fresh Recommendation System",
     layout="wide"
 )
 
-# ---------------------------------------------
-# Title
-# ---------------------------------------------
+# =====================================================
+# TITLE
+# =====================================================
 st.title("🛒 Amazon Fresh Recommendation System")
 st.write(
-    "This application demonstrates an **end-to-end customer segmentation and "
-    "recommendation system** built using Amazon Fresh transaction data."
+    "An **end-to-end customer segmentation and recommendation system** "
+    "built using Amazon Fresh transaction data."
 )
 
-# ---------------------------------------------
-# Load Parquet Helper
-# ---------------------------------------------
+# =====================================================
+# LOAD HELPERS
+# =====================================================
 @st.cache_data
 def load_parquet(name):
     return pd.read_parquet(f"data/{name}")
 
-# ---------------------------------------------
-# Load Data
-# ---------------------------------------------
+@st.cache_data
+def load_customer_feature_shard(shard_key):
+    return pd.read_parquet(
+        f"data/customer_feature_shards/CUST{shard_key}.parquet"
+    )
+
+# =====================================================
+# LOAD DATA
+# =====================================================
 eda_daily = load_parquet("eda_daily_metrics.parquet")
 eda_category_summary = load_parquet("eda_category_summary.parquet")
 eda_weekday = load_parquet("eda_weekday_summary.parquet")
 eda_orders_per_customer = load_parquet("eda_orders_per_customer.parquet")
 
-segment_dist = load_parquet("segment_distribution.parquet")
+segment_distribution = load_parquet("segment_distribution.parquet")
 feature_dist = load_parquet("feature_distribution_summary.parquet")
 feature_corr = load_parquet("feature_correlation.parquet")
 
@@ -45,48 +51,37 @@ baseline_items = load_parquet("baseline_top_items.parquet")
 df_segments = load_parquet("customer_segments.parquet")
 df_item_lookup = load_parquet("item_lookup2.parquet")
 
-# ---------------------------------------------
-# Customer feature shard loader
-# ---------------------------------------------
-@st.cache_data
-def load_customer_feature_shard(shard_key):
-    return pd.read_parquet(
-        f"data/customer_feature_shards/CUST{shard_key}.parquet"
-    )
-
-# ---------------------------------------------
-# Segment Personas
-# ---------------------------------------------
+# =====================================================
+# SEGMENT PERSONAS
+# =====================================================
 SEGMENT_PERSONAS = {
     "Large Basket Stock-up": (
         "**Who are they?**\nHigh-spending family households.\n\n"
         "**Behavior:** Infrequent but very large baskets.\n\n"
-        "**Buys:** Full grocery shops, premium and bulk items."
+        "**Buys:** Bulk grocery and premium items."
     ),
     "Habitual Replenishers": (
         "**Who are they?** Loyal routine shoppers.\n\n"
         "**Behavior:** Frequent medium baskets.\n\n"
-        "**Buys:** Dairy, produce, staples."
+        "**Buys:** Staples, dairy, produce."
     ),
     "Fill-in Convenience Shoppers": (
-        "**Who are they?** Urgency-driven shoppers.\n\n"
+        "**Who are they?** Urgent top-up shoppers.\n\n"
         "**Behavior:** Small baskets.\n\n"
-        "**Buys:** Snacks, beverages, ready meals."
+        "**Buys:** Snacks and beverages."
     ),
     "Low Engagement / Trial Users": (
-        "**Who are they?** New or infrequent customers.\n\n"
-        "**Behavior:** Sparse transactions.\n\n"
-        "**Needs:** Onboarding and discovery."
+        "**Who are they?** New or inactive users.\n\n"
+        "**Behavior:** Low engagement."
     ),
     "Cold Start / Unsegmented": (
-        "**Who are they?** Insufficient history.\n\n"
-        "**Behavior:** Unknown."
+        "**Who are they?** Insufficient data."
     )
 }
 
-# ---------------------------------------------
-# Tabs
-# ---------------------------------------------
+# =====================================================
+# TABS
+# =====================================================
 tabs = st.tabs([
     "🚀 Overview",
     "📊 Transaction EDA",
@@ -97,23 +92,142 @@ tabs = st.tabs([
 ])
 
 # =====================================================
-# TAB 4 — SEGMENTATION (ENRICHED)
+# TAB 1 — OVERVIEW
 # =====================================================
-with tabs[3]:
+with tabs[0]:
 
-    st.header("🧠 Customer Segmentation Insights")
+    st.header("🚀 Project Overview")
 
-    st.markdown(
-        "Customers were segmented using unsupervised learning on behavioral features. "
-        "This section interprets cluster quality, business meaning, and behavioral KPIs."
+    st.markdown("""
+    ### 🎯 Objective
+    Build an intelligent **personalization system** for online grocery retail by:
+
+    - Understanding customer purchasing behavior  
+    - Segmenting customers using unsupervised learning  
+    - Delivering segment-aware product recommendations  
+    """)
+
+    st.divider()
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "Total Customers",
+        f"{segment_distribution.customer_count.sum():,}"
+    )
+    col2.metric(
+        "Customer Segments",
+        segment_distribution.shape[0]
+    )
+    col3.metric(
+        "Transaction Days",
+        eda_daily.shape[0]
     )
 
     st.divider()
 
-    # -----------------------------------------
-    # KPI CARDS (from first app)
-    # -----------------------------------------
-    st.subheader("📌 Segment KPI Snapshot")
+    st.subheader("🔗 System Architecture")
+
+    st.code("""
+Transactions
+   ↓
+Exploratory Data Analysis
+   ↓
+Feature Engineering
+   ↓
+Customer Segmentation
+   ↓
+Recommendation Models
+   ↓
+Interactive Dashboard
+""")
+
+    st.subheader("📊 Segment Distribution")
+    st.bar_chart(
+        segment_distribution.set_index("segment_name")["customer_count"]
+    )
+
+# =====================================================
+# TAB 2 — TRANSACTION EDA
+# =====================================================
+with tabs[1]:
+
+    st.header("📊 Transaction-Level EDA")
+
+    eda_daily["order_date"] = pd.to_datetime(eda_daily["order_date"])
+
+    min_d = eda_daily["order_date"].min()
+    max_d = eda_daily["order_date"].max()
+
+    start, end = st.date_input(
+        "Date Range",
+        value=(min_d, max_d)
+    )
+
+    mask = (
+        (eda_daily["order_date"] >= pd.to_datetime(start)) &
+        (eda_daily["order_date"] <= pd.to_datetime(end))
+    )
+
+    df = eda_daily.loc[mask]
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("Orders", f"{df.orders.sum():,}")
+    col2.metric("Revenue", f"${df.revenue.sum():,.0f}")
+    col3.metric("Customers", f"{df.customers.sum():,}")
+    col4.metric("Avg Basket", f"{df.avg_basket_size.mean():.2f}")
+
+    st.subheader("📈 Orders & Revenue Trend")
+    st.line_chart(df.set_index("order_date")[["orders", "revenue"]])
+
+    st.subheader("🏷 Category Contribution")
+    st.bar_chart(
+        eda_category_summary
+        .set_index("category")["total_revenue"]
+    )
+
+    st.subheader("📆 Orders by Weekday")
+    st.bar_chart(
+        eda_weekday.set_index("weekday")["orders"]
+    )
+
+    st.subheader("👥 Orders per Customer Distribution")
+    st.bar_chart(
+        eda_orders_per_customer["orders"]
+        .value_counts()
+        .sort_index()
+    )
+
+# =====================================================
+# TAB 3 — FEATURE ENGINEERING
+# =====================================================
+with tabs[2]:
+
+    st.header("🧪 Feature Engineering")
+
+    st.markdown("""
+    Features were derived from transaction data to capture:
+
+    - Recency, frequency, monetary behavior  
+    - Basket composition  
+    - Shopping mission patterns  
+    - Category diversity
+    """)
+
+    st.subheader("📊 Feature Distributions")
+    st.dataframe(feature_dist)
+    st.bar_chart(feature_dist.set_index("feature")["mean"])
+
+    st.subheader("🔗 Feature Correlation")
+    st.dataframe(feature_corr)
+
+# =====================================================
+# TAB 4 — SEGMENTATION (ENRICHED)
+# =====================================================
+with tabs[3]:
+
+    st.header("🧠 Customer Segmentation")
 
     col1, col2, col3 = st.columns(3)
 
@@ -125,68 +239,55 @@ with tabs[3]:
         "avg_orders", ascending=False
     ).iloc[0]
 
-    most_recent = segment_kpis.sort_values(
+    recent = segment_kpis.sort_values(
         "avg_recency_days"
     ).iloc[0]
 
-    col1.metric(
-        "Highest Avg Spend Segment",
-        top_spend["segment_name"],
-        f"{top_spend['avg_total_spend']:.0f}"
-    )
+    col1.metric("Highest Spend Segment", top_spend.segment_name)
+    col2.metric("Most Frequent Segment", most_freq.segment_name)
+    col3.metric("Most Recent Segment", recent.segment_name)
 
-    col2.metric(
-        "Most Frequent Shoppers",
-        most_freq["segment_name"],
-        f"{most_freq['avg_orders']:.1f} orders"
-    )
-
-    col3.metric(
-        "Most Recently Active Segment",
-        most_recent["segment_name"],
-        f"{most_recent['avg_recency_days']:.0f} days"
-    )
-
-    st.divider()
-
-    # -----------------------------------------
-    # Segment distribution
-    # -----------------------------------------
     st.subheader("📊 Segment Distribution")
-
     st.bar_chart(
-        segment_dist.set_index("segment_name")["customer_count"]
+        segment_distribution.set_index("segment_name")["customer_count"]
     )
 
-    # -----------------------------------------
-    # Segment KPIs
-    # -----------------------------------------
-    st.subheader("📈 Segment-Level KPIs")
-
+    st.subheader("📈 Segment KPIs")
     st.dataframe(segment_kpis)
 
-    st.bar_chart(
-        segment_kpis
-        .set_index("segment_name")[
-            ["avg_orders", "avg_total_spend", "avg_order_value"]
-        ]
-    )
+    st.subheader("🧠 Segment Personas")
+    for s, p in SEGMENT_PERSONAS.items():
+        st.markdown(f"### {s}")
+        st.markdown(p)
 
-    st.info(
-        "Distinct behavioral differences validate the effectiveness of clustering. "
-        "Each segment represents a unique shopping mission."
-    )
+# =====================================================
+# TAB 5 — RECOMMENDATION SYSTEMS
+# =====================================================
+with tabs[4]:
+
+    st.header("🤖 Recommendation Systems")
+
+    st.subheader("⭐ Baseline Recommender")
+    st.dataframe(baseline_items.head(10))
 
     st.divider()
 
-    # -----------------------------------------
-    # Personas (from first app)
-    # -----------------------------------------
-    st.subheader("🧠 Segment Personas")
+    st.subheader("🎯 Segment-Aware Recommender")
 
-    for seg, desc in SEGMENT_PERSONAS.items():
-        st.markdown(f"### {seg}")
-        st.markdown(desc)
+    seg = st.selectbox(
+        "Select Segment",
+        segment_affinity["segment_name"].unique()
+    )
+
+    recs = (
+        segment_affinity[
+            segment_affinity["segment_name"] == seg
+        ]
+        .sort_values("rank")
+        .head(10)
+    )
+
+    st.dataframe(recs)
 
 # =====================================================
 # TAB 6 — CUSTOMER DEEP DIVE (ENRICHED)
@@ -195,160 +296,101 @@ with tabs[5]:
 
     st.header("🔍 Customer Deep Dive")
 
-    customer_id = st.text_input(
-        "Enter Customer ID",
-        placeholder="CUST1234567"
-    )
+    customer_id = st.text_input("Enter Customer ID")
 
     if not customer_id:
         st.stop()
 
-    cust_row = df_segments[
-        df_segments["customer_id"] == customer_id
+    cust_seg = df_segments[
+        df_segments.customer_id == customer_id
     ]
 
-    if cust_row.empty:
-        st.warning("Customer not found.")
+    if cust_seg.empty:
+        st.warning("Customer not found")
         st.stop()
 
-    segment_name = cust_row.iloc[0]["segment_name"]
+    segment_name = cust_seg.iloc[0]["segment_name"]
 
-    st.success(f"Customer Segment: {segment_name}")
+    st.success(f"Segment: {segment_name}")
+    st.info(SEGMENT_PERSONAS.get(segment_name))
 
-    # -----------------------------------------
-    # Persona
-    # -----------------------------------------
-    st.info(
-        SEGMENT_PERSONAS.get(
-            segment_name,
-            "Persona not available."
-        )
-    )
+    shard = customer_id[4]
+    df_feat = load_customer_feature_shard(shard)
 
-    # -----------------------------------------
-    # Load customer features
-    # -----------------------------------------
-    shard_key = customer_id[4]
-    shard_df = load_customer_feature_shard(shard_key)
-
-    cust_feat = shard_df[
-        shard_df["customer_id"] == customer_id
-    ]
-
-    if cust_feat.empty:
-        st.warning("Customer feature data unavailable.")
-        st.stop()
-
-    cust_feat = cust_feat.iloc[0]
-
-    # -----------------------------------------
-    # KPI cards
-    # -----------------------------------------
-    st.subheader("📊 Customer Profile Snapshot")
+    cust = df_feat[df_feat.customer_id == customer_id].iloc[0]
 
     col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Orders", int(cust.orders))
+    col2.metric("Spend", f"${cust.total_spend:.0f}")
+    col3.metric("AOV", f"${cust.avg_order_value:.0f}")
+    col4.metric("Recency", int(cust.days_since_last_order))
 
-    col1.metric("Orders", int(cust_feat["orders"]))
-    col2.metric("Total Spend", f"${cust_feat['total_spend']:.0f}")
-    col3.metric("Avg Order Value", f"${cust_feat['avg_order_value']:.0f}")
-    col4.metric(
-        "Days Since Last Order",
-        int(cust_feat["days_since_last_order"])
-    )
-
-    # -----------------------------------------
-    # Segment comparison table
-    # -----------------------------------------
     seg_kpi = segment_kpis[
-        segment_kpis["segment_name"] == segment_name
+        segment_kpis.segment_name == segment_name
     ].iloc[0]
 
-    comparison_df = pd.DataFrame({
-        "Metric": [
-            "Orders",
-            "Total Spend",
-            "Avg Order Value",
-            "Recency (Days)"
-        ],
+    comp = pd.DataFrame({
+        "Metric": ["Orders", "Spend", "AOV", "Recency"],
         "Customer": [
-            cust_feat["orders"],
-            cust_feat["total_spend"],
-            cust_feat["avg_order_value"],
-            cust_feat["days_since_last_order"]
+            cust.orders,
+            cust.total_spend,
+            cust.avg_order_value,
+            cust.days_since_last_order
         ],
-        "Segment Average": [
-            seg_kpi["avg_orders"],
-            seg_kpi["avg_total_spend"],
-            seg_kpi["avg_order_value"],
-            seg_kpi["avg_recency_days"]
+        "Segment Avg": [
+            seg_kpi.avg_orders,
+            seg_kpi.avg_total_spend,
+            seg_kpi.avg_order_value,
+            seg_kpi.avg_recency_days
         ]
     })
 
-    st.subheader("⚖️ Customer vs Segment Comparison")
-    st.dataframe(comparison_df)
+    st.subheader("⚖️ Customer vs Segment")
+    st.dataframe(comp)
 
-    # -----------------------------------------
-    # Visual comparison
-    # -----------------------------------------
-    viz_df = comparison_df.melt(
-        id_vars="Metric",
-        var_name="Type",
-        value_name="Value"
-    )
+    melt = comp.melt("Metric", var_name="Type", value_name="Value")
 
-    chart = alt.Chart(viz_df).mark_bar().encode(
-        x="Metric:N",
-        y="Value:Q",
-        color="Type:N",
-        column="Type:N"
+    chart = alt.Chart(melt).mark_bar().encode(
+        x="Metric",
+        y="Value",
+        color="Type",
+        column="Type"
     )
 
     st.altair_chart(chart, use_container_width=True)
 
-    # -----------------------------------------
-    # Recommendations
-    # -----------------------------------------
-    st.subheader("🎯 Personalized Recommendations")
+    st.subheader("🎯 Recommendations")
 
     recs = (
         segment_affinity[
-            segment_affinity["segment_name"] == segment_name
+            segment_affinity.segment_name == segment_name
         ]
         .sort_values("rank")
         .head(40)
         .merge(df_item_lookup, on="asin", how="left")
     )
 
-    selected = []
     seen = set()
+    final = []
 
-    for _, row in recs.iterrows():
-        cat = row.get("uphl1")
-        if pd.isna(cat):
-            continue
+    for _, r in recs.iterrows():
+        cat = r.get("uphl1")
         if cat not in seen:
-            selected.append(row)
+            final.append(r)
             seen.add(cat)
-        if len(selected) == 5:
+        if len(final) == 5:
             break
 
-    for r in selected:
+    for r in final:
         st.markdown(
             f"• **{r['item_name']}**  \n"
             f"_Category: {r.get('uphl1','Unknown')}_"
         )
 
-    with st.expander("🤔 Why am I seeing these recommendations?"):
+    with st.expander("🤔 Why am I seeing this?"):
         st.markdown(f"""
-        These recommendations are generated using a
-        **segment-aware collaborative filtering approach**.
-
-        **Explanation:**
-        - You belong to the **{segment_name}** segment  
-        - Customers in this segment share similar shopping behavior  
-        - Products frequently bought together are identified  
-        - Results are diversified across categories  
-
-        This ensures a balance between **relevance, diversity and interpretability**.
+        - You belong to **{segment_name}**
+        - Recommendations are learned from customers with similar behavior
+        - Items are co-purchased frequently within this segment
+        - Results are category diversified
         """)
-
