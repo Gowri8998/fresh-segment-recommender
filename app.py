@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-
+st.write("🔥 SEGMENTATION TAB UPDATED")
 
 # =====================================================
 # PAGE CONFIG
@@ -20,7 +20,7 @@ st.write(
     "An **end-to-end customer segmentation and recommendation system** "
     "built using Amazon Fresh transaction data."
 )
-st.write("🔥 SEGMENTATION TAB UPDATED")
+
 # =====================================================
 # LOAD HELPERS
 # =====================================================
