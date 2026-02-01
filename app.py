@@ -246,12 +246,41 @@ with tabs[3]:
     # =================================================
     st.subheader("👥 Segment Personas")
 
-    persona_table = pd.DataFrame({
-        "Segment": list(SEGMENT_PERSONAS.keys()),
-        "Persona Description": list(SEGMENT_PERSONAS.values())
-    })
-
+    persona_table = pd.DataFrame([
+        {
+            "Segment": "Large Basket Stock-up",
+            "Who are they?": "High-spending family households",
+            "Behavior": "Infrequent but very large baskets",
+            "Typical Purchases": "Bulk grocery items, premium products"
+        },
+        {
+            "Segment": "Habitual Replenishers",
+            "Who are they?": "Loyal routine shoppers",
+            "Behavior": "Frequent medium-sized baskets",
+            "Typical Purchases": "Staples, dairy, fresh produce"
+        },
+        {
+            "Segment": "Fill-in Convenience Shoppers",
+            "Who are they?": "Urgent top-up shoppers",
+            "Behavior": "Small, quick baskets",
+            "Typical Purchases": "Snacks, beverages, ready meals"
+        },
+        {
+            "Segment": "Low Engagement / Trial Users",
+            "Who are they?": "New or inactive customers",
+            "Behavior": "Sparse or irregular activity",
+            "Typical Purchases": "Trial or limited items"
+        },
+        {
+            "Segment": "Cold Start / Unsegmented",
+            "Who are they?": "Insufficient transaction history",
+            "Behavior": "Unknown or mixed",
+            "Typical Purchases": "Not yet identifiable"
+        }
+    ])
+    
     st.dataframe(persona_table, use_container_width=True)
+
 
     st.info(
         "Personas translate clustering output into business-understandable "
