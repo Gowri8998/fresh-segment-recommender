@@ -574,89 +574,9 @@ with tab_recs:
     """)
 
 
-# =============================================
-# TAB 6 — EVALUATION
-# =============================================
-with tab_eval:
-
-    st.header("📈 Recommendation Evaluation")
-
-    st.markdown("""
-    Recommendation models were evaluated using offline metrics
-    on a held-out customer test set.
-    """)
-
-    st.divider()
-
-    # -----------------------------------------
-    # Show raw evaluation table
-    # -----------------------------------------
-    st.subheader("📊 Evaluation Summary")
-
-    st.dataframe(evaluation_summary)
-
-    st.divider()
-
-    # -----------------------------------------
-    # Auto-detect metric columns
-    # -----------------------------------------
-    possible_metric_cols = [
-        "precision_at_k", "precision",
-        "recall_at_k", "recall",
-        "hit_rate", "hit_rate_at_k", "hit"
-    ]
-
-    metric_cols = [
-        c for c in evaluation_summary.columns
-        if c.lower() in possible_metric_cols
-        or any(x in c.lower() for x in ["precision", "recall", "hit"])
-    ]
-
-    # detect model column
-    model_col = None
-    for c in evaluation_summary.columns:
-        if c.lower() in ["model", "model_name", "recommender", "algorithm"]:
-            model_col = c
-            break
-
-    if model_col is None:
-        st.error("Could not detect model column in evaluation file.")
-        st.stop()
-
-    # -----------------------------------------
-    # Comparison chart
-    # -----------------------------------------
-    st.subheader("📈 Model Comparison")
-
-    chart_df = evaluation_summary.set_index(model_col)[metric_cols]
-
-    st.bar_chart(chart_df)
-
-    st.success(
-        "Segment-aware recommender outperforms the baseline "
-        "across multiple evaluation metrics."
-    )
-
-    st.divider()
-
-    # -----------------------------------------
-    # Interpretation
-    # -----------------------------------------
-    st.subheader("🧠 Interpretation")
-
-    st.markdown("""
-    **Key takeaways:**
-
-    • Personalized models outperform popularity-based baselines  
-    • Behavioral segmentation improves recommendation relevance  
-    • Offline evaluation confirms measurable uplift  
-
-    These results justify the use of segment-aware recommendation
-    strategies in retail personalization systems.
-    """)
 
 # =============================================
-# TAB 7 — CUSTOMER DEEP DIVE
+# TAB 6 — CUSTOMER DEEP DIVE
 # =============================================
 with tab_customer:
 
