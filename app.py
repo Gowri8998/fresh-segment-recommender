@@ -214,3 +214,104 @@ Interactive Dashboard
         "actionable customer intelligence. The segmentation layer enables "
         "behavior-aware recommendations tailored to different shopping missions."
     )
+
+
+# =============================================
+# TAB 2 — TRANSACTION EDA
+# =============================================
+with tab_eda:
+
+    st.header("📊 Transaction-Level Exploratory Data Analysis")
+
+    st.markdown(
+        "This section explores high-level customer purchasing behavior "
+        "using transaction-level summaries derived from the raw dataset."
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Date Range Filter
+    # -----------------------------------------
+    st.subheader("📅 Select Analysis Period")
+
+    eda_daily["order_date"] = pd.to_datetime(eda_daily["order_date"])
+
+    min_date = eda_daily["order_date"].min()
+    max_date = eda_daily["order_date"].max()
+
+    start_date, end_date = st.date_input(
+        "Date Range",
+        value=(min_date, max_date),
+        min_value=min_date,
+        max_value=max_date
+    )
+
+    mask = (
+        (eda_daily["order_date"] >= pd.to_datetime(start_date)) &
+        (eda_daily["order_date"] <= pd.to_datetime(end_date))
+    )
+
+    filtered_daily = eda_daily.loc[mask]
+
+    st.divider()
+
+    # -----------------------------------------
+    # Key Metrics
+    # -----------------------------------------
+    st.subheader("📌 Key Metrics")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("Total Orders", f"{filtered_daily.orders.sum():,}")
+    col2.metric("Total Revenue", f"${filtered_daily.revenue.sum():,.0f}")
+    col3.metric("Active Customers", f"{filtered_daily.customers.sum():,}")
+    col4.metric(
+        "Avg Basket Size",
+        f"{filtered_daily.avg_basket_size.mean():.2f}"
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Trends Over Time
+    # -----------------------------------------
+    st.subheader("📈 Behavioral Trends Over Time")
+
+    st.line_chart(
+        filtered_daily.set_index("order_date")[["orders", "revenue"]]
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Basket Size Trend
+    # -----------------------------------------
+    st.subheader("🧺 Average Basket Size Trend")
+
+    st.line_chart(
+        filtered_daily.set_index("order_date")["avg_basket_size"]
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Category Contribution
+    # -----------------------------------------
+    st.subheader("🏷 Category Contribution")
+
+    st.dataframe(
+        eda_category_summary
+        .sort_values("total_revenue", ascending=False)
+    )
+
+    st.bar_chart(
+        eda_category_summary
+        .set_index("category")["total_revenue"]
+    )
+
+    st.info(
+        "Category-level analysis helps identify major revenue drivers "
+        "and informs segment-specific merchandising strategies."
+    )
+
