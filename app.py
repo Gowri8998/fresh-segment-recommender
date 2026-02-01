@@ -223,42 +223,105 @@ with tabs[2]:
     st.dataframe(feature_corr)
 
 # =====================================================
-# TAB 4 — SEGMENTATION (ENRICHED)
+# TAB 4 — CUSTOMER SEGMENTATION INSIGHTS
 # =====================================================
 with tabs[3]:
 
-    st.header("🧠 Customer Segmentation")
+    st.header("🧠 Customer Segmentation Insights")
 
-    col1, col2, col3 = st.columns(3)
+    st.markdown("""
+    Customers were grouped using unsupervised learning on behavioral features
+    derived from transaction data.  
+    This section explains **who the segments are**, **how large they are**,
+    and **how their shopping behaviors differ**.
+    """)
 
-    top_spend = segment_kpis.sort_values(
-        "avg_total_spend", ascending=False
-    ).iloc[0]
+    st.divider()
 
-    most_freq = segment_kpis.sort_values(
-        "avg_orders", ascending=False
-    ).iloc[0]
+    # =================================================
+    # SECTION 1 — SEGMENT PERSONAS
+    # =================================================
+    st.subheader("👥 Segment Personas")
 
-    recent = segment_kpis.sort_values(
-        "avg_recency_days"
-    ).iloc[0]
+    persona_table = pd.DataFrame({
+        "Segment": list(SEGMENT_PERSONAS.keys()),
+        "Persona Description": list(SEGMENT_PERSONAS.values())
+    })
 
-    col1.metric("Highest Spend Segment", top_spend.segment_name)
-    col2.metric("Most Frequent Segment", most_freq.segment_name)
-    col3.metric("Most Recent Segment", recent.segment_name)
+    st.dataframe(persona_table, use_container_width=True)
 
-    st.subheader("📊 Segment Distribution")
-    st.bar_chart(
-        segment_distribution.set_index("segment_name")["customer_count"]
+    st.info(
+        "Personas translate clustering output into business-understandable "
+        "customer archetypes, enabling interpretation beyond numeric labels."
     )
 
-    st.subheader("📈 Segment KPIs")
-    st.dataframe(segment_kpis)
+    st.divider()
 
-    st.subheader("🧠 Segment Personas")
-    for s, p in SEGMENT_PERSONAS.items():
-        st.markdown(f"### {s}")
-        st.markdown(p)
+    # =================================================
+    # SECTION 2 — SEGMENT DISTRIBUTION
+    # =================================================
+    st.subheader("📊 Segment Distribution")
+
+    st.markdown(
+        "The chart below shows the proportion of customers belonging "
+        "to each behavioral segment."
+    )
+
+    st.bar_chart(
+        segment_distribution
+        .set_index("segment_name")["customer_count"]
+    )
+
+    st.divider()
+
+    # =================================================
+    # SECTION 3 — SEGMENT-LEVEL KPIs
+    # =================================================
+    st.subheader("📈 Behavioral KPIs by Segment")
+
+    st.markdown("""
+    Segment-level KPIs summarize average customer behavior within each cluster
+    and highlight meaningful differences in engagement and spending patterns.
+    """)
+
+    st.dataframe(segment_kpis, use_container_width=True)
+
+    st.bar_chart(
+        segment_kpis
+        .set_index("segment_name")[
+            [
+                "avg_orders",
+                "avg_total_spend",
+                "avg_order_value",
+                "avg_recency_days"
+            ]
+        ]
+    )
+
+    st.divider()
+
+    # =================================================
+    # SECTION 4 — KEY INSIGHTS
+    # =================================================
+    st.subheader("🔍 Key Segmentation Insights")
+
+    st.markdown("""
+    **Key observations from the segmentation analysis:**
+
+    - Stock-up oriented customers exhibit high spend but lower visit frequency  
+    - Habitual replenishment shoppers drive platform engagement  
+    - Convenience shoppers place small but time-sensitive orders  
+    - Low-engagement users represent opportunities for reactivation  
+
+    These differences justify the need for **segment-specific personalization**
+    instead of a single global strategy.
+    """)
+
+    st.success(
+        "Customer segmentation reveals distinct shopping missions that directly "
+        "inform targeted recommendations, promotions, and merchandising strategies."
+    )
+
 
 # =====================================================
 # TAB 5 — SEGMENTATION-DRIVEN RECOMMENDATIONS
