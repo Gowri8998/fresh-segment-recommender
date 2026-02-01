@@ -28,9 +28,12 @@ def load_parquet(name):
 eda_daily = load_parquet("eda_daily_metrics.parquet")
 eda_category_summary = load_parquet("eda_category_summary.parquet")
 
+eda_weekday = load_parquet("eda_weekday_summary.parquet")
+eda_orders_per_customer = load_parquet("eda_orders_per_customer.parquet")
+
+
 segment_dist = load_parquet("segment_distribution.parquet")
 evaluation_summary = load_parquet("recommender_evaluation_summary.parquet")
-
 
 # ---------------------------------------------
 # Load Customer Segments (Parquet)
@@ -317,3 +320,31 @@ with tab_eda:
         "and informs segment-specific merchandising strategies."
     )
 
+    st.divider()
+    st.subheader("📆 Orders by Day of Week")
+    
+    st.bar_chart(
+        eda_weekday.set_index("weekday")["orders"]
+    )
+    
+    st.info(
+        "Shopping activity varies across the week, "
+        "with noticeable differences between weekday "
+        "and weekend behavior."
+    )
+    
+    st.divider()
+    st.subheader("👥 Orders per Customer Distribution")
+    
+    st.bar_chart(
+        eda_orders_per_customer["orders"]
+        .value_counts()
+        .sort_index()
+    )
+    
+    st.info(
+        "Customer activity is highly skewed — a small "
+        "set of customers place many orders while the "
+        "majority transact infrequently. This motivates "
+        "customer segmentation and personalized recommendations."
+    )
