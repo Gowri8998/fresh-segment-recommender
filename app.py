@@ -563,32 +563,46 @@ with tabs[5]:
 
     st.altair_chart(chart, use_container_width=True)
 
-    st.subheader("🎯 Recommendations")
-
-    recs = (
+    st.subheader("🎯 Personalized Recommendations")
+    
+    TOP_N = 10
+    
+    customer_recs = (
         segment_affinity[
-            segment_affinity.segment_name == segment_name
+            segment_affinity["segment_name"] == segment_name
         ]
         .sort_values("rank")
-        .head(40)
-        .merge(df_item_lookup, on="asin", how="left")
+        .head(TOP_N)
+        .merge(
+            df_item_lookup,
+            on="asin",
+            how="left"
+        )
+    )
+    
+    # ---- safe item name handling
+    display_recs = customer_recs.copy()
+    
+    if "item_name" not in display_recs.columns:
+        for col in [
+            "product_name", "title",
+            "item_desc", "asin_name",
+            "display_name"
+        ]:
+            if col in display_recs.columns:
+                display_recs["item_name"] = display_recs[col]
+                break
+        else:
+            display_recs["item_name"] = "Unknown Item"
+    
+    st.dataframe(
+        display_recs[
+            ["asin", "item_name", "uphl1"]
+        ]
+        .rename(columns={"uphl1": "Category"})
+        .reset_index(drop=True)
     )
 
-    seen = set()
-    final = []
-
-    for _, r in recs.iterrows():
-        cat = r.get("uphl1")
-        if cat not in seen:
-            final.append(r)
-            seen.add(cat)
-        if len(final) == 5:
-            break
-
-    for r in final:
-        st.markdown(
-            f"• **{r['item_name']}**  \n"
-            f"_Category: {r.get('uphl1','Unknown')}_"
         )
 
     with st.expander("🤔 Why am I seeing this?"):
