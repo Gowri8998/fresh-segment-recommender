@@ -41,6 +41,10 @@ feature_corr = load_parquet("feature_correlation.parquet")
 segment_kpis = load_parquet("segment_kpis.parquet")
 segment_distribution = load_parquet("segment_distribution.parquet")
 
+baseline_items = load_parquet("baseline_top_items.parquet")
+segment_affinity = load_parquet("segment_item_affinity.parquet")
+
+
 # ---------------------------------------------
 # Load Customer Segments (Parquet)
 # ---------------------------------------------
@@ -491,4 +495,86 @@ with tab_segments:
         "strategy is suboptimal. Different customer segments exhibit "
         "distinct shopping behaviors requiring tailored personalization."
     )
+
+# =============================================
+# TAB 5 — RECOMMENDATION SYSTEMS
+# =============================================
+with tab_recs:
+
+    st.header("🤖 Recommendation Systems")
+
+    st.markdown("""
+    This section demonstrates two recommendation approaches:
+
+    **1️⃣ Baseline Recommender**  
+    Popular items recommended uniformly to all customers.
+
+    **2️⃣ Segment-Aware Recommender**  
+    Personalized recommendations based on customer shopping behavior segments.
+    """)
+
+    st.divider()
+
+    # -----------------------------------------
+    # Baseline recommender
+    # -----------------------------------------
+    st.subheader("⭐ Baseline: Most Popular Items")
+
+    st.dataframe(
+        baseline_items.head(10)
+    )
+
+    st.info(
+        "The baseline recommender ignores customer behavior and recommends "
+        "globally popular items. While simple, it lacks personalization."
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Segment-aware recommender
+    # -----------------------------------------
+    st.subheader("🎯 Segment-Aware Recommendations")
+
+    selected_segment = st.selectbox(
+        "Select customer segment",
+        segment_affinity["segment_name"].unique()
+    )
+
+    top_recs = (
+        segment_affinity[
+            segment_affinity["segment_name"] == selected_segment
+        ]
+        .sort_values("rank")
+        .head(10)
+    )
+
+    st.dataframe(top_recs)
+
+    st.success(
+        "Segment-aware recommendations capture differences in "
+        "shopping missions such as stock-up, routine replenishment, "
+        "and convenience trips."
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Explanation
+    # -----------------------------------------
+    st.subheader("🧠 How Segment-Aware Recommendation Works")
+
+    st.markdown("""
+    **Step 1 — Item Co-occurrence Learning**  
+    Products frequently purchased together are identified using transaction data.
+
+    **Step 2 — Segment Filtering**  
+    Item affinities are computed separately within each customer segment.
+
+    **Step 3 — Diversification**  
+    Recommendations are diversified across categories to improve discovery.
+
+    This approach balances **relevance**, **diversity**, and **interpretability**.
+    """)
+
 
