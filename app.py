@@ -562,12 +562,13 @@ with tabs[5]:
     )
 
     st.altair_chart(chart, use_container_width=True)
-
+    
     st.subheader("🎯 Personalized Recommendations")
     
+    # Get top-N recommendations for the customer's segment
     TOP_N = 10
     
-    customer_recs = (
+    recs = (
         segment_affinity[
             segment_affinity["segment_name"] == segment_name
         ]
@@ -581,29 +582,35 @@ with tabs[5]:
     )
     
     # ---- safe item name handling
-    display_recs = customer_recs.copy()
+    recs_display = recs.copy()
     
-    if "item_name" not in display_recs.columns:
+    if "item_name" not in recs_display.columns:
         for col in [
             "product_name", "title",
             "item_desc", "asin_name",
             "display_name"
         ]:
-            if col in display_recs.columns:
-                display_recs["item_name"] = display_recs[col]
+            if col in recs_display.columns:
+                recs_display["item_name"] = recs_display[col]
                 break
         else:
-            display_recs["item_name"] = "Unknown Item"
+            recs_display["item_name"] = "Unknown Item"
     
+    # Final display table
     st.dataframe(
-        display_recs[
+        recs_display[
             ["asin", "item_name", "uphl1"]
         ]
         .rename(columns={"uphl1": "Category"})
-        .reset_index(drop=True)
+        .reset_index(drop=True),
+        use_container_width=True
+    )
+    
+    st.caption(
+        "Recommendations are generated using a segment-aware co-occurrence model. "
+        "Items are ranked by purchase affinity within the customer’s behavioral segment."
     )
 
-        )
 
     with st.expander("🤔 Why am I seeing this?"):
         st.markdown(f"""
