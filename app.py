@@ -26,6 +26,8 @@ def load_parquet(name):
     return pd.read_parquet(f"data/{name}")
 
 eda_daily = load_parquet("eda_daily_metrics.parquet")
+eda_category_summary = load_parquet("eda_category_summary.parquet")
+
 segment_dist = load_parquet("segment_distribution.parquet")
 evaluation_summary = load_parquet("recommender_evaluation_summary.parquet")
 
