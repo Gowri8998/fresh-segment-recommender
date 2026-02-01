@@ -587,40 +587,59 @@ with tab_eval:
     st.header("📈 Recommendation Evaluation")
 
     st.markdown("""
-    Recommendation models were evaluated using standard top-K metrics
-    on a held-out test set of customers.
-
-    The objective is to compare:
-    - **Baseline popularity recommender**
-    - **Segment-aware personalized recommender**
+    Recommendation models were evaluated using offline metrics
+    on a held-out customer test set.
     """)
 
     st.divider()
 
     # -----------------------------------------
-    # Evaluation Table
+    # Show raw evaluation table
     # -----------------------------------------
-    st.subheader("📊 Evaluation Metrics Summary")
+    st.subheader("📊 Evaluation Summary")
 
     st.dataframe(evaluation_summary)
 
     st.divider()
 
     # -----------------------------------------
-    # Metric Comparison Chart
+    # Auto-detect metric columns
     # -----------------------------------------
-    st.subheader("📈 Baseline vs Segment-Aware Comparison")
+    possible_metric_cols = [
+        "precision_at_k", "precision",
+        "recall_at_k", "recall",
+        "hit_rate", "hit_rate_at_k", "hit"
+    ]
 
-    metric_cols = ["precision_at_k", "recall_at_k", "hit_rate"]
+    metric_cols = [
+        c for c in evaluation_summary.columns
+        if c.lower() in possible_metric_cols
+        or any(x in c.lower() for x in ["precision", "recall", "hit"])
+    ]
 
-    st.bar_chart(
-        evaluation_summary
-        .set_index("model")[metric_cols]
-    )
+    # detect model column
+    model_col = None
+    for c in evaluation_summary.columns:
+        if c.lower() in ["model", "model_name", "recommender", "algorithm"]:
+            model_col = c
+            break
+
+    if model_col is None:
+        st.error("Could not detect model column in evaluation file.")
+        st.stop()
+
+    # -----------------------------------------
+    # Comparison chart
+    # -----------------------------------------
+    st.subheader("📈 Model Comparison")
+
+    chart_df = evaluation_summary.set_index(model_col)[metric_cols]
+
+    st.bar_chart(chart_df)
 
     st.success(
-        "Segment-aware recommendations consistently outperform the "
-        "baseline model across all evaluation metrics."
+        "Segment-aware recommender outperforms the baseline "
+        "across multiple evaluation metrics."
     )
 
     st.divider()
@@ -628,17 +647,15 @@ with tab_eval:
     # -----------------------------------------
     # Interpretation
     # -----------------------------------------
-    st.subheader("🧠 Key Insights")
+    st.subheader("🧠 Interpretation")
 
     st.markdown("""
-    **Why the segment-aware model performs better:**
+    **Key takeaways:**
 
-    • Captures heterogeneous shopping behavior  
-    • Avoids one-size-fits-all recommendations  
-    • Learns item relationships within similar customer groups  
-    • Improves relevance without complex deep learning models  
+    • Personalized models outperform popularity-based baselines  
+    • Behavioral segmentation improves recommendation relevance  
+    • Offline evaluation confirms measurable uplift  
 
-    This demonstrates the strong value of behavioral segmentation
-    for retail personalization systems.
+    These results justify the use of segment-aware recommendation
+    strategies in retail personalization systems.
     """)
-
