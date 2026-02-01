@@ -38,6 +38,8 @@ evaluation_summary = load_parquet("recommender_evaluation_summary.parquet")
 feature_dist = load_parquet("feature_distribution_summary.parquet")
 feature_corr = load_parquet("feature_correlation.parquet")
 
+segment_kpis = load_parquet("segment_kpis.parquet")
+segment_distribution = load_parquet("segment_distribution.parquet")
 
 # ---------------------------------------------
 # Load Customer Segments (Parquet)
@@ -424,3 +426,69 @@ with tab_features:
         "Correlation analysis was used to remove redundant features prior "
         "to clustering, improving stability and interpretability of segments."
     )
+
+
+# =============================================
+# TAB 4 — SEGMENTATION INSIGHTS
+# =============================================
+with tab_segments:
+
+    st.header("🧠 Customer Segmentation Insights")
+
+    st.markdown(
+        "Customers were segmented using unsupervised learning on behavioral "
+        "features derived from transaction history. This section interprets "
+        "the resulting segments and highlights key behavioral differences."
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Segment Distribution
+    # -----------------------------------------
+    st.subheader("📊 Segment Size Distribution")
+
+    st.bar_chart(
+        segment_distribution
+        .set_index("segment_name")["customer_count"]
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Segment KPI Overview
+    # -----------------------------------------
+    st.subheader("📈 Segment-Level Behavioral KPIs")
+
+    st.dataframe(segment_kpis)
+
+    st.info(
+        "Segment KPIs summarize average behavioral patterns within each cluster, "
+        "revealing clear differences in spend, engagement, and shopping missions."
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # KPI Comparison Chart
+    # -----------------------------------------
+    st.subheader("📊 Key KPI Comparison")
+
+    comparison_cols = [
+        "avg_orders",
+        "avg_total_spend",
+        "avg_order_value",
+        "avg_recency_days"
+    ]
+
+    st.bar_chart(
+        segment_kpis
+        .set_index("segment_name")[comparison_cols]
+    )
+
+    st.info(
+        "These comparisons demonstrate why a single global recommendation "
+        "strategy is suboptimal. Different customer segments exhibit "
+        "distinct shopping behaviors requiring tailored personalization."
+    )
+
