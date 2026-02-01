@@ -35,6 +35,10 @@ eda_orders_per_customer = load_parquet("eda_orders_per_customer.parquet")
 segment_dist = load_parquet("segment_distribution.parquet")
 evaluation_summary = load_parquet("recommender_evaluation_summary.parquet")
 
+feature_dist = load_parquet("feature_distribution_summary.parquet")
+feature_corr = load_parquet("feature_correlation.parquet")
+
+
 # ---------------------------------------------
 # Load Customer Segments (Parquet)
 # ---------------------------------------------
@@ -347,4 +351,76 @@ with tab_eda:
         "set of customers place many orders while the "
         "majority transact infrequently. This motivates "
         "customer segmentation and personalized recommendations."
+    )
+
+# =============================================
+# TAB 3 — FEATURE ENGINEERING
+# =============================================
+with tab_features:
+
+    st.header("🧪 Feature Engineering Insights")
+
+    st.markdown(
+        "Customer segmentation was driven by behavioral features engineered "
+        "from raw transaction data. This section explains feature construction "
+        "and validates their analytical usefulness."
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Feature Overview
+    # -----------------------------------------
+    st.subheader("🔍 Engineered Feature Groups")
+
+    st.markdown("""
+    **1. RFM & Engagement Features**
+    - Orders  
+    - Total spend  
+    - Days since last order  
+
+    **2. Basket Behavior Features**
+    - Average units per order  
+    - Average order value  
+
+    **3. Trip Mission Composition**
+    - Fill-in shopping %  
+    - Routine shopping %  
+    - Large basket %  
+
+    **4. Category Breadth**
+    - Category diversity
+    """)
+
+    st.divider()
+
+    # -----------------------------------------
+    # Feature Distribution Summary
+    # -----------------------------------------
+    st.subheader("📊 Feature Distributions")
+
+    st.dataframe(feature_dist)
+
+    st.bar_chart(
+        feature_dist.set_index("feature")["mean"]
+    )
+
+    st.info(
+        "Feature distributions reveal strong skewness and heterogeneity "
+        "across customers, reinforcing the need for clustering-based "
+        "segmentation instead of rule-based grouping."
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Feature Correlation
+    # -----------------------------------------
+    st.subheader("🔗 Feature Correlation Analysis")
+
+    st.dataframe(feature_corr)
+
+    st.info(
+        "Correlation analysis was used to remove redundant features prior "
+        "to clustering, improving stability and interpretability of segments."
     )
