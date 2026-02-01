@@ -44,6 +44,7 @@ segment_distribution = load_parquet("segment_distribution.parquet")
 baseline_items = load_parquet("baseline_top_items.parquet")
 segment_affinity = load_parquet("segment_item_affinity.parquet")
 
+evaluation_summary = load_parquet("recommender_evaluation_summary.parquet")
 
 # ---------------------------------------------
 # Load Customer Segments (Parquet)
@@ -577,4 +578,67 @@ with tab_recs:
     This approach balances **relevance**, **diversity**, and **interpretability**.
     """)
 
+
+# =============================================
+# TAB 6 — EVALUATION
+# =============================================
+with tab_eval:
+
+    st.header("📈 Recommendation Evaluation")
+
+    st.markdown("""
+    Recommendation models were evaluated using standard top-K metrics
+    on a held-out test set of customers.
+
+    The objective is to compare:
+    - **Baseline popularity recommender**
+    - **Segment-aware personalized recommender**
+    """)
+
+    st.divider()
+
+    # -----------------------------------------
+    # Evaluation Table
+    # -----------------------------------------
+    st.subheader("📊 Evaluation Metrics Summary")
+
+    st.dataframe(evaluation_summary)
+
+    st.divider()
+
+    # -----------------------------------------
+    # Metric Comparison Chart
+    # -----------------------------------------
+    st.subheader("📈 Baseline vs Segment-Aware Comparison")
+
+    metric_cols = ["precision_at_k", "recall_at_k", "hit_rate"]
+
+    st.bar_chart(
+        evaluation_summary
+        .set_index("model")[metric_cols]
+    )
+
+    st.success(
+        "Segment-aware recommendations consistently outperform the "
+        "baseline model across all evaluation metrics."
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Interpretation
+    # -----------------------------------------
+    st.subheader("🧠 Key Insights")
+
+    st.markdown("""
+    **Why the segment-aware model performs better:**
+
+    • Captures heterogeneous shopping behavior  
+    • Avoids one-size-fits-all recommendations  
+    • Learns item relationships within similar customer groups  
+    • Improves relevance without complex deep learning models  
+
+    This demonstrates the strong value of behavioral segmentation
+    for retail personalization systems.
+    """)
 
