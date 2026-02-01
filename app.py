@@ -294,51 +294,27 @@ with tabs[4]:
     st.subheader("❌ Without Segmentation (Baseline Recommender)")
 
     st.markdown("""
-    The baseline recommender suggests items based only on
-    **overall purchase popularity**.
+    The baseline recommender suggests items based purely on
+    **overall popularity across all customers**.
 
-    These recommendations are:
-    - Identical for all customers  
-    - Independent of shopping behavior  
-    - Not mission-aware  
+    These recommendations:
+    - Are identical for everyone  
+    - Ignore shopping behavior and intent  
+    - Serve as a comparison benchmark  
     """)
 
-    baseline_top5 = (
-        baseline_items
-        .head(5)
-        .merge(
-            df_item_lookup,
-            on="asin",
-            how="left"
-        )
-    )
+    # ✅ USE BASELINE EXACTLY AS EARLIER
+    baseline_top5 = baseline_items.head(5)
 
-    # ---- safe item name handling
-    baseline_display = baseline_top5.copy()
-
-    if "item_name" not in baseline_display.columns:
-        for col in [
-            "product_name", "title",
-            "item_desc", "asin_name",
-            "display_name"
-        ]:
-            if col in baseline_display.columns:
-                baseline_display["item_name"] = baseline_display[col]
-                break
-        else:
-            baseline_display["item_name"] = "Unknown Item"
-
-    st.markdown("**Top 5 Globally Popular Items (Same for Everyone):**")
+    st.markdown("**Top 5 Globally Popular Items:**")
 
     st.dataframe(
-        baseline_display[
-            ["asin", "item_name"]
-        ].reset_index(drop=True)
+        baseline_top5.reset_index(drop=True)
     )
 
     st.info(
-        "These recommendations do not change across customer segments "
-        "and therefore lack personalization."
+        "These recommendations remain the same for all customers "
+        "and do not adapt to behavioral differences."
     )
 
     st.divider()
