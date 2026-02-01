@@ -44,7 +44,6 @@ segment_distribution = load_parquet("segment_distribution.parquet")
 baseline_items = load_parquet("baseline_top_items.parquet")
 segment_affinity = load_parquet("segment_item_affinity.parquet")
 
-evaluation_summary = load_parquet("recommender_evaluation_summary.parquet")
 
 # ---------------------------------------------
 # Load Customer Segments (Parquet)
@@ -135,7 +134,6 @@ tabs = st.tabs([
     "🧪 Feature Engineering",
     "🧠 Segmentation",
     "🤖 Recommendation Systems",
-    "📈 Evaluation",
     "🔍 Customer Deep Dive"
 ])
 
@@ -144,8 +142,7 @@ tab_eda = tabs[1]
 tab_features = tabs[2]
 tab_segments = tabs[3]
 tab_recs = tabs[4]
-tab_eval = tabs[5]
-tab_customer = tabs[6]
+tab_customer = tabs[5]
 
 
 # =============================================
@@ -206,8 +203,6 @@ Feature Engineering
 Customer Segmentation
    ↓
 Recommendation Models
-   ↓
-Model Evaluation
    ↓
 Interactive Dashboard
         """,
@@ -659,3 +654,163 @@ with tab_eval:
     These results justify the use of segment-aware recommendation
     strategies in retail personalization systems.
     """)
+
+# =============================================
+# TAB 7 — CUSTOMER DEEP DIVE
+# =============================================
+with tab_customer:
+
+    st.header("🔍 Customer Deep Dive")
+
+    st.markdown(
+        "Explore individual customer behavior, segment assignment, "
+        "and personalized product recommendations."
+    )
+
+    st.divider()
+
+    # -----------------------------------------
+    # Customer Input
+    # -----------------------------------------
+    customer_id = st.text_input(
+        "Enter Customer ID",
+        placeholder="CUST1234567"
+    )
+
+    if not customer_id:
+        st.stop()
+
+    # -----------------------------------------
+    # Segment Lookup
+    # -----------------------------------------
+    cust_seg = df_segments[
+        df_segments["customer_id"] == customer_id
+    ]
+
+    if cust_seg.empty:
+        st.warning("Customer not found in segmentation data.")
+        st.stop()
+
+    segment_name = cust_seg.iloc[0]["segment_name"]
+
+    st.success(f"Customer Segment: {segment_name}")
+
+    # -----------------------------------------
+    # Persona
+    # -----------------------------------------
+    persona = SEGMENT_PERSONAS.get(
+        segment_name,
+        "Persona not defined."
+    )
+
+    st.info(persona)
+
+    # -----------------------------------------
+    # Load customer features shard
+    # -----------------------------------------
+    shard_key = customer_id[4]  # CUSTX...
+    cust_features_df = load_customer_feature_shard(shard_key)
+
+    cust_feat = cust_features_df[
+        cust_features_df["customer_id"] == customer_id
+    ]
+
+    if cust_feat.empty:
+        st.warning("Customer feature data not available.")
+        st.stop()
+
+    cust_feat = cust_feat.iloc[0]
+
+    # -----------------------------------------
+    # KPIs
+    # -----------------------------------------
+    st.subheader("📊 Customer Behavioral KPIs")
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    col1.metric("Orders", int(cust_feat["orders"]))
+    col2.metric("Total Spend", f"${cust_feat['total_spend']:.0f}")
+    col3.metric("Avg Order Value", f"${cust_feat['avg_order_value']:.2f}")
+    col4.metric("Recency (Days)", int(cust_feat["days_since_last_order"]))
+    col5.metric("Category Diversity", int(cust_feat["category_diversity"]))
+
+    # -----------------------------------------
+    # Segment comparison
+    # -----------------------------------------
+    st.subheader("⚖️ Customer vs Segment Average")
+
+    seg_kpi = segment_kpis[
+        segment_kpis["segment_name"] == segment_name
+    ].iloc[0]
+
+    comparison_df = pd.DataFrame({
+        "Metric": [
+            "Orders",
+            "Total Spend",
+            "Avg Order Value",
+            "Recency",
+            "Category Diversity"
+        ],
+        "Customer": [
+            cust_feat["orders"],
+            cust_feat["total_spend"],
+            cust_feat["avg_order_value"],
+            cust_feat["days_since_last_order"],
+            cust_feat["category_diversity"]
+        ],
+        "Segment Avg": [
+            seg_kpi["avg_orders"],
+            seg_kpi["avg_total_spend"],
+            seg_kpi["avg_order_value"],
+            seg_kpi["avg_recency_days"],
+            seg_kpi["avg_category_diversity"]
+        ]
+    })
+
+    st.dataframe(comparison_df)
+
+    # -----------------------------------------
+    # Recommendations
+    # -----------------------------------------
+    st.subheader("🎯 Personalized Recommendations")
+
+    recs = (
+        segment_affinity[
+            segment_affinity["segment_name"] == segment_name
+        ]
+        .sort_values("rank")
+        .head(30)
+        .merge(
+            item_lookup,
+            on="asin",
+            how="left"
+        )
+    )
+
+    # diversify by category
+    selected = []
+    seen = set()
+
+    for _, row in recs.iterrows():
+        cat = row.get("uphl1")
+
+        if cat not in seen:
+            selected.append(row)
+            seen.add(cat)
+
+        if len(selected) == 5:
+            break
+
+    if not selected:
+        st.warning("No recommendations available.")
+    else:
+        for r in selected:
+            st.markdown(
+                f"• **{r['item_name']}**  \n"
+                f"_Category: {r.get('uphl1', 'Unknown')}_"
+            )
+
+    st.caption(
+        "Recommendations are segment-aware, co-occurrence based, "
+        "and category-diversified to improve discovery."
+    )
