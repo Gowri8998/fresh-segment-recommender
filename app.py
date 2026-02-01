@@ -273,50 +273,51 @@ with tabs[4]:
     st.subheader("📌 Why Do Recommendations Need Segmentation?")
 
     st.markdown("""
-    In online grocery retail, customers shop with **different intentions**, such as:
+    Customers exhibit different shopping behaviors such as:
 
-    - Monthly stock-up shopping  
-    - Routine weekly replenishment  
-    - Urgent convenience purchases  
+    - Large stock-up grocery trips  
+    - Routine replenishment shopping  
+    - Convenience or emergency purchases  
 
-    Traditional recommendation systems treat all customers the same,
-    ignoring these behavioral differences.
+    A single global recommendation strategy fails to capture these differences.
 
-    As a result, recommendations may be **popular**, but not necessarily
-    **relevant to the customer’s shopping mission**.
-
-    Customer segmentation helps address this problem by grouping customers
-    with similar behavioral patterns before generating recommendations.
+    Customer segmentation enables learning **behavior-specific recommendation
+    patterns**, improving relevance and personalization.
     """)
 
     st.divider()
 
     # =================================================
-    # SECTION 2 — WITHOUT SEGMENTATION
+    # SECTION 2 — WITHOUT SEGMENTATION (BASELINE)
     # =================================================
     st.subheader("❌ Without Segmentation (Baseline Recommender)")
 
     st.markdown("""
-    The baseline recommender uses **global item popularity**.
-
-    - Same items are recommended to all customers  
-    - Ignores purchase frequency, basket size, and shopping intent  
-    - Does not adapt to customer behavior  
+    The baseline recommender suggests items purely based on
+    **overall purchase popularity**, without considering customer behavior.
     """)
 
-    st.markdown("**Top 5 Globally Popular Items:**")
-
-    baseline_top5 = baseline_items.head(5)
-
-    for _, row in baseline_top5.iterrows():
-        st.markdown(
-            f"• **{row.get('item_name', 'Unknown Item')}**"
+    baseline_top5 = (
+        baseline_items
+        .head(5)
+        .merge(
+            df_item_lookup,
+            on="asin",
+            how="left"
         )
+    )
+
+    st.markdown("**Top 5 Globally Popular Items (Same for Everyone):**")
+
+    st.dataframe(
+        baseline_top5[
+            ["asin", "item_name"]
+        ].reset_index(drop=True)
+    )
 
     st.info(
-        "These recommendations remain identical regardless of whether "
-        "the customer is a stock-up shopper, a frequent replenisher, "
-        "or a convenience buyer."
+        "These recommendations remain identical for all customers, "
+        "regardless of their shopping frequency or basket size."
     )
 
     st.divider()
@@ -329,9 +330,9 @@ with tabs[4]:
     st.markdown("""
     In the segment-aware approach:
 
-    - Customers are first grouped using behavioral clustering  
+    - Customers are first clustered using behavioral features  
     - Item co-occurrence patterns are learned **within each segment**  
-    - Recommendations align with the dominant shopping mission  
+    - Recommendations reflect dominant shopping missions  
     """)
 
     selected_segment = st.selectbox(
@@ -339,12 +340,12 @@ with tabs[4]:
         segment_affinity["segment_name"].unique()
     )
 
-    segment_recs = (
+    segment_top5 = (
         segment_affinity[
             segment_affinity["segment_name"] == selected_segment
         ]
         .sort_values("rank")
-        .head(30)
+        .head(5)
         .merge(
             df_item_lookup,
             on="asin",
@@ -352,31 +353,23 @@ with tabs[4]:
         )
     )
 
-    # simple category diversification
-    selected = []
-    seen_categories = set()
+    st.markdown(
+        f"**Top 5 Recommended Items for _{selected_segment}_ Segment:**"
+    )
 
-    for _, row in segment_recs.iterrows():
-        category = row.get("uphl1")
-
-        if category not in seen_categories:
-            selected.append(row)
-            seen_categories.add(category)
-
-        if len(selected) == 5:
-            break
-
-    st.markdown(f"**Top 5 Recommendations for _{selected_segment}_ Segment:**")
-
-    for row in selected:
-        st.markdown(
-            f"• **{row.get('item_name', 'Unknown Item')}**  \n"
-            f"_Category: {row.get('uphl1', 'Unknown')}_"
-        )
+    st.dataframe(
+        segment_top5[
+            ["asin", "item_name", "uphl1"]
+        ]
+        .rename(columns={
+            "uphl1": "Category"
+        })
+        .reset_index(drop=True)
+    )
 
     st.success(
-        "Recommendations differ across segments, reflecting differences "
-        "in shopping intent and purchasing behavior."
+        "Unlike the baseline recommender, these recommendations differ "
+        "across customer segments, reflecting variations in shopping intent."
     )
 
     st.divider()
@@ -387,13 +380,11 @@ with tabs[4]:
     st.subheader("🎯 Key Takeaway")
 
     st.markdown("""
-    **Customer segmentation enables behavior-aware personalization.**
+    - **Baseline recommender** provides generic popularity-based suggestions  
+    - **Segment-aware recommender** aligns recommendations with customer behavior  
 
-    - Without segmentation → generic popularity-based recommendations  
-    - With segmentation → mission-driven, relevant recommendations  
-
-    This demonstrates how unsupervised customer clustering directly improves
-    downstream personalization systems in online retail.
+    This demonstrates how customer segmentation enables
+    **behavior-aware personalization** in online retail systems.
     """)
 
 
