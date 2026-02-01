@@ -222,6 +222,7 @@ with tabs[2]:
     st.subheader("🔗 Feature Correlation")
     st.dataframe(feature_corr)
 
+
 # =====================================================
 # TAB 4 — CUSTOMER SEGMENTATION INSIGHTS
 # =====================================================
